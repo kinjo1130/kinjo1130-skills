@@ -1,6 +1,6 @@
 {
   "name": "kinjo1130-skills",
-  "description": "kinjo1130のClaude Codeスキルマーケットプレイス。E2E検証、PRレビュー、対話コンテキスト管理、Codex相談、ライブラリ更新レビュー、Cosense操作など。",
+  "description": "kinjo1130のClaude Codeスキルマーケットプレイス。Playwright MCPを使った汎用E2E検証など。",
   "version": "1.0.0",
   "author": {
     "name": "kinjo1130"
