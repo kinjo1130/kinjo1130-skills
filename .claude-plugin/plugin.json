@@ -1,0 +1,10 @@
+{
+  "name": "kinjo1130-skills",
+  "description": "kinjo1130のClaude Codeスキルマーケットプレイス。E2E検証、PRレビュー、対話コンテキスト管理、Codex相談、ライブラリ更新レビュー、Cosense操作など。",
+  "version": "1.0.0",
+  "author": {
+    "name": "kinjo1130"
+  },
+  "repository": "https://github.com/kinjo1130/kinjo1130-skills",
+  "license": "MIT"
+}

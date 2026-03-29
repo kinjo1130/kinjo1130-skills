@@ -1,0 +1,106 @@
+# .claude/e2e-verify.yml - E2E検証の設定ファイル
+# このファイルをプロジェクトの .claude/e2e-verify.yml に配置してください
+
+# プロジェクト情報
+project:
+  name: "My Web App"
+
+# 環境設定
+# --env 引数で切り替え可能。未指定時は local が使われる
+environments:
+  local:
+    url: "http://localhost:3000"
+    dev_server:
+      # dev serverが未起動の場合、ユーザーに案内されるコマンド
+      commands:
+        - "npm run dev"
+  staging:
+    url: "https://staging.example.com"
+    notes: "テストデータの作成・変更可"
+  production:
+    url: "https://app.example.com"
+    notes: "読み取り専用の検証のみ。データの変更は行わない"
+
+# 認証設定
+auth:
+  roles:
+    # ロール1: 一般ユーザー
+    - name: "user"
+      login_url: "/login"
+      credentials:
+        # 環境ごとに認証情報を定義
+        local:
+          fields:
+            - selector: "#email"
+              value: "user@example.com"
+            - selector: "#password"
+              value: "password"
+          submit: "button[type='submit']"
+        staging:
+          fields:
+            - selector: "#email"
+              value: "test-user@example.com"
+            - selector: "#password"
+              value: "staging-password"
+          submit: "button[type='submit']"
+        # "ask_user" を指定すると、実行時にユーザーに認証情報を質問する
+        production: "ask_user"
+      # ログイン成功の判定条件（いずれかを指定）
+      success_indicator:
+        url_contains: "/dashboard"
+        # element_exists: ".user-avatar"    # 要素の存在で判定
+        # text_contains: "ようこそ"          # テキストの存在で判定
+
+    # ロール2: 管理者
+    - name: "admin"
+      login_url: "/admin/login"
+      credentials:
+        local:
+          fields:
+            - selector: "#email"
+              value: "admin@example.com"
+            - selector: "#password"
+              value: "password"
+          submit: "button[type='submit']"
+        production: "ask_user"
+      success_indicator:
+        url_contains: "/admin"
+
+# テストシナリオ
+scenarios:
+  # login シナリオは特別扱い: 全ロールのログインフローを検証
+  - name: "login"
+    description: "ログインフローの検証"
+    requires_auth: null  # ログイン自体をテストするため null
+
+  - name: "dashboard"
+    description: "ダッシュボード画面の検証"
+    requires_auth: "user"
+    pages:
+      - path: "/dashboard"
+        expect: "ナビゲーション、主要なウィジェット"
+
+  - name: "settings"
+    description: "設定画面の検証"
+    requires_auth: "user"
+    pages:
+      - path: "/settings"
+        expect: "プロフィール編集フォーム"
+      - path: "/settings/notifications"
+        expect: "通知設定"
+
+  - name: "admin-users"
+    description: "管理者: ユーザー管理画面"
+    requires_auth: "admin"
+    pages:
+      - path: "/admin/users"
+        expect: "ユーザー一覧テーブル"
+      - path: "/admin/users/new"
+        expect: "ユーザー登録フォーム"
+
+  # smoke-test 実行時のシナリオ順序
+  smoke_test_order:
+    - "login"
+    - "dashboard"
+    - "settings"
+    - "admin-users"
