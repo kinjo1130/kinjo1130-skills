@@ -13,6 +13,7 @@ claude plugin add kinjo1130/kinjo1130-skills
 | スキル | コマンド | 説明 |
 |--------|---------|------|
 | [e2e-verify](skills/e2e-verify/) | `/e2e-verify` | Playwright MCPを使った汎用E2E検証。設定ファイル or 自動探索で任意のWebアプリを検証 |
+| [secretary](skills/secretary/) | `/secretary` | Cosense・Notion・GitHubからタスクを横断取得し、秘書的にタスク管理・進捗チェックを行う |
 
 ## e2e-verify
 
@@ -56,6 +57,28 @@ Playwright MCPサーバーが設定されている必要があります。プロ
 ```gitignore
 .claude/e2e-verify.yml
 ```
+
+## secretary
+
+Cosense・Notion・GitHubからタスクを横断取得し、秘書的にサポートするスキル。
+
+- **タイムブロック管理**: Cosenseの日付ページから今やるべきタスクを判定
+- **持ち越し検出**: 昨日・一昨日から未完了のまま持ち越されたタスクを検出
+- **マルチソース対応**: Cosense / Notion MCP / GitHub Issue を横断取得
+- 設定例: [examples/secretary.yml](examples/secretary.yml)
+
+```
+/secretary                # 今何する？（デフォルト）
+/secretary ブリーフィング   # 朝のブリーフィング
+/secretary 進捗どう？      # 進捗チェック
+/secretary 振り返り        # 1日の振り返り
+```
+
+### 前提条件
+
+- Cosenseスキル（`cosense_api.sh`）がセットアップ済みであること
+- Notion連携を使う場合は Notion MCP が接続されていること
+- GitHub連携を使う場合は `gh` CLI が認証済みであること
 
 ## ライセンス
 
