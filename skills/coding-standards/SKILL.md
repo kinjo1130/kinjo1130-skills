@@ -3,7 +3,7 @@ name: coding-standards
 description: >-
   TanStack Start + Hono + Prisma の pnpm モノレポでプロダクトを作るときのコーディング規約。
   コードを書く・直す・レビューする時、アイデアから実装計画を作る時、新規プロダクトを立ち上げる時に必ず読み込む。
-  プロジェクトの CLAUDE.md が「coding-standards に従う」と指示している時にも使用する。
+  プロジェクトの CLAUDE.md / AGENTS.md が「coding-standards に従う」と指示している時にも使用する。
 ---
 
 # コーディング規約
@@ -35,7 +35,9 @@ description: >-
    - `templates/tsconfig.base.json` → `tsconfig.base.json`
    - `templates/dependency-cruiser.cjs` → `.dependency-cruiser.cjs`
    - `templates/biome-plugins/` → `biome-plugins/`
-   - `templates/CLAUDE.md` → `.claude/CLAUDE.md`（`<product>` とポート番号を埋める）
+   - `templates/CLAUDE.md` → `.claude/CLAUDE.md`（Claude Code 用）
+   - `templates/AGENTS.md` → `AGENTS.md`（Codex 用）
+   - どちらも `<product>` とプロジェクト番号を埋める。両方のツールで開発するなら両方置く
 3. 最初の PR に CI（`references/infra.md` の `ci.yml`）を入れる。規約の多くは Biome・tsc・dependency-cruiser が機械的に検査する
 
 ## 書き終えたら確認すること

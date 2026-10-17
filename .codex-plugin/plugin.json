@@ -1,0 +1,19 @@
+{
+  "name": "kinjo1130-skills",
+  "version": "1.0.0",
+  "description": "kinjo1130 の Codex 用スキル集。モノレポ向けコーディング規約、E2E 検証など。",
+  "author": {
+    "name": "kinjo1130"
+  },
+  "repository": "https://github.com/kinjo1130/kinjo1130-skills",
+  "license": "MIT",
+  "keywords": ["coding-standards", "e2e", "secretary"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "kinjo1130 skills",
+    "shortDescription": "コーディング規約・E2E 検証などのスキル集",
+    "developerName": "kinjo1130",
+    "category": "Developer Tools",
+    "capabilities": ["Read", "Write"]
+  }
+}

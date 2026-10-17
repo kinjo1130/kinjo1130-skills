@@ -4,9 +4,20 @@ Claude Code 用のスキルマーケットプレイス。
 
 ## インストール
 
+### Claude Code
+
 ```bash
 claude plugin add kinjo1130/kinjo1130-skills
 ```
+
+### Codex
+
+```bash
+codex plugin marketplace add kinjo1130/kinjo1130-skills
+codex plugin add kinjo1130-skills@kinjo1130-skills
+```
+
+Claude Code と Codex は同じ `skills/` を読みます。Codex では `$coding-standards` のように skill 名で呼び出せます。
 
 ## スキル一覧
 
@@ -87,13 +98,12 @@ TanStack Start（SSR）+ Hono + Prisma + Neon の pnpm モノレポで、誰が�
 
 - `SKILL.md`: 作業ごとに読む reference の対応表と、書き終えた後のセルフチェック
 - `references/`: 書式（空行・分割・命名）、TypeScript、モノレポ構成、バックエンド、フロントエンド、テスト、インフラ
-- `templates/`: `biome.json`（`as` 禁止の Grit plugin つき）、`tsconfig.base.json`、`.dependency-cruiser.cjs`、プロジェクト用 `CLAUDE.md`
+- `templates/`: `biome.json`（`as` 禁止の Grit plugin つき）、`tsconfig.base.json`、`.dependency-cruiser.cjs`、プロジェクト用の `CLAUDE.md` と `AGENTS.md`
 
-プロジェクトの `.claude/CLAUDE.md` に次の 1 行を書くと、実装や計画のたびに規約が読み込まれます（`templates/CLAUDE.md` に含まれています）。
+プロジェクトの指示ファイルに skill を読む指示を書くと、実装や計画のたびに規約が読み込まれます。
 
-```markdown
-コードを書く・直す・レビューする前、および実装計画を作る前に、必ず `kinjo1130-skills:coding-standards` skill を読み込み、その規約に従う。
-```
+- Claude Code: `templates/CLAUDE.md` を `.claude/CLAUDE.md` にコピーする
+- Codex: `templates/AGENTS.md` をリポジトリ直下の `AGENTS.md` にコピーする
 
 ## ライセンス
 
