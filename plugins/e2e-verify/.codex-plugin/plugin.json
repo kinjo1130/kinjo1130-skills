@@ -1,0 +1,26 @@
+{
+  "name": "e2e-verify",
+  "description": "Playwright MCPを使った汎用E2E検証。設定ファイル or 自動探索で任意のWebアプリを検証する",
+  "version": "1.0.0",
+  "author": {
+    "name": "kinjo1130"
+  },
+  "repository": "https://github.com/kinjo1130/kinjo1130-skills",
+  "license": "MIT",
+  "keywords": [
+    "e2e",
+    "playwright",
+    "testing"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "e2e-verify",
+    "shortDescription": "Playwright MCPを使った汎用E2E検証。設定ファイル or 自動探索で任意のWebアプリを検証する",
+    "developerName": "kinjo1130",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Read",
+      "Write"
+    ]
+  }
+}

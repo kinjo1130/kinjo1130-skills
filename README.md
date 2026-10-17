@@ -1,19 +1,34 @@
 # kinjo1130-skills
 
-Claude Code 用のスキルマーケットプレイス。
+Claude Code と Codex 用のスキルマーケットプレイス。
 
 ## インストール
 
+skill ごとに 1 つのプラグインになっているので、必要なものだけ入れられます。Claude Code と Codex は同じ `plugins/<name>/skills/` を読みます。
+
+### Claude Code
+
 ```bash
-claude plugin add kinjo1130/kinjo1130-skills
+claude plugin marketplace add kinjo1130/kinjo1130-skills
+claude plugin install coding-standards@kinjo1130-skills
 ```
+
+### Codex
+
+```bash
+codex plugin marketplace add kinjo1130/kinjo1130-skills
+codex plugin add coding-standards@kinjo1130-skills
+```
+
+`coding-standards` の部分を、下の一覧のプラグイン名に変えると他の skill を入れられます。
 
 ## スキル一覧
 
-| スキル | コマンド | 説明 |
+| プラグイン | 呼び出し（Claude Code / Codex） | 説明 |
 |--------|---------|------|
-| [e2e-verify](skills/e2e-verify/) | `/e2e-verify` | Playwright MCPを使った汎用E2E検証。設定ファイル or 自動探索で任意のWebアプリを検証 |
-| [secretary](skills/secretary/) | `/secretary` | Cosense・Notion・GitHubからタスクを横断取得し、秘書的にタスク管理・進捗チェックを行う |
+| [e2e-verify](plugins/e2e-verify/skills/e2e-verify/) | `/e2e-verify:e2e-verify` / `$e2e-verify` | Playwright MCPを使った汎用E2E検証。設定ファイル or 自動探索で任意のWebアプリを検証 |
+| [secretary](plugins/secretary/skills/secretary/) | `/secretary:secretary` / `$secretary` | Cosense・Notion・GitHubからタスクを横断取得し、秘書的にタスク管理・進捗チェックを行う |
+| [coding-standards](plugins/coding-standards/skills/coding-standards/) | `/coding-standards:coding-standards` / `$coding-standards` | TanStack Start + Hono + Prisma の pnpm モノレポ向けコーディング規約。実装・計画・レビューの前に読み込ませる |
 
 ## e2e-verify
 
@@ -79,6 +94,19 @@ Cosense・Notion・GitHubからタスクを横断取得し、秘書的にサポ�
 - Cosenseスキル（`cosense_api.sh`）がセットアップ済みであること
 - Notion連携を使う場合は Notion MCP が接続されていること
 - GitHub連携を使う場合は `gh` CLI が認証済みであること
+
+## coding-standards
+
+TanStack Start（SSR）+ Hono + Prisma + Neon の pnpm モノレポで、誰が書いても同じ形のコードになるようにするための規約。
+
+- `SKILL.md`: 作業ごとに読む reference の対応表と、書き終えた後のセルフチェック
+- `references/`: 書式（空行・分割・命名）、TypeScript、モノレポ構成、バックエンド、フロントエンド、テスト、インフラ
+- `templates/`: `biome.json`（`as` 禁止の Grit plugin つき）、`tsconfig.base.json`、`.dependency-cruiser.cjs`、プロジェクト用の `CLAUDE.md` と `AGENTS.md`
+
+プロジェクトの指示ファイルに skill を読む指示を書くと、実装や計画のたびに規約が読み込まれます。
+
+- Claude Code: `templates/CLAUDE.md` を `.claude/CLAUDE.md` にコピーする
+- Codex: `templates/AGENTS.md` をリポジトリ直下の `AGENTS.md` にコピーする
 
 ## ライセンス
 
