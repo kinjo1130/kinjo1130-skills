@@ -14,6 +14,7 @@ claude plugin add kinjo1130/kinjo1130-skills
 |--------|---------|------|
 | [e2e-verify](skills/e2e-verify/) | `/e2e-verify` | Playwright MCPを使った汎用E2E検証。設定ファイル or 自動探索で任意のWebアプリを検証 |
 | [secretary](skills/secretary/) | `/secretary` | Cosense・Notion・GitHubからタスクを横断取得し、秘書的にタスク管理・進捗チェックを行う |
+| [coding-standards](skills/coding-standards/) | `/coding-standards` | TanStack Start + Hono + Prisma の pnpm モノレポ向けコーディング規約。実装・計画・レビューの前に読み込ませる |
 
 ## e2e-verify
 
@@ -79,6 +80,20 @@ Cosense・Notion・GitHubからタスクを横断取得し、秘書的にサポ�
 - Cosenseスキル（`cosense_api.sh`）がセットアップ済みであること
 - Notion連携を使う場合は Notion MCP が接続されていること
 - GitHub連携を使う場合は `gh` CLI が認証済みであること
+
+## coding-standards
+
+TanStack Start（SSR）+ Hono + Prisma + Neon の pnpm モノレポで、誰が書いても同じ形のコードになるようにするための規約。
+
+- `SKILL.md`: 作業ごとに読む reference の対応表と、書き終えた後のセルフチェック
+- `references/`: 書式（空行・分割・命名）、TypeScript、モノレポ構成、バックエンド、フロントエンド、テスト、インフラ
+- `templates/`: `biome.json`（`as` 禁止の Grit plugin つき）、`tsconfig.base.json`、`.dependency-cruiser.cjs`、プロジェクト用 `CLAUDE.md`
+
+プロジェクトの `.claude/CLAUDE.md` に次の 1 行を書くと、実装や計画のたびに規約が読み込まれます（`templates/CLAUDE.md` に含まれています）。
+
+```markdown
+コードを書く・直す・レビューする前、および実装計画を作る前に、必ず `kinjo1130-skills:coding-standards` skill を読み込み、その規約に従う。
+```
 
 ## ライセンス
 

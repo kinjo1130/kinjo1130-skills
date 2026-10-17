@@ -1,0 +1,7 @@
+TsAsExpression(ty = $type) as $assertion where {
+  $type <: not r"^const$",
+  register_diagnostic(
+    span = $assertion,
+    message = "`as` による型アサーションは禁止です。Zod で parse するか、型を直してください（`as const` は可）。"
+  )
+}
