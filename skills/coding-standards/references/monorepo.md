@@ -37,7 +37,8 @@
 ├── tsconfig.base.json
 ├── .dependency-cruiser.cjs
 ├── pnpm-workspace.yaml
-└── .claude/CLAUDE.md        # templates/CLAUDE.md を元に作る
+├── .claude/CLAUDE.md        # Claude Code 用。templates/CLAUDE.md を元に作る
+└── AGENTS.md                # Codex 用。templates/AGENTS.md を元に作る
 ```
 
 パッケージ名は `@<product>/web` / `@<product>/api` / `@<product>/contracts` とする。
