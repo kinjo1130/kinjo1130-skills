@@ -1,0 +1,26 @@
+{
+  "name": "kinjo1130-skills",
+  "owner": {
+    "name": "kinjo1130"
+  },
+  "metadata": {
+    "description": "kinjo1130 の Claude Code 用スキル集。skill ごとに個別にインストールできる。"
+  },
+  "plugins": [
+    {
+      "name": "coding-standards",
+      "source": "./plugins/coding-standards",
+      "description": "TanStack Start + Hono + Prisma の pnpm モノレポ向けコーディング規約。実装・計画・レビューの前に読み込ませる"
+    },
+    {
+      "name": "e2e-verify",
+      "source": "./plugins/e2e-verify",
+      "description": "Playwright MCPを使った汎用E2E検証。設定ファイル or 自動探索で任意のWebアプリを検証する"
+    },
+    {
+      "name": "secretary",
+      "source": "./plugins/secretary",
+      "description": "Cosense・Notion・GitHubからタスクを横断取得し、秘書的にタスク管理・進捗チェックを行う"
+    }
+  ]
+}

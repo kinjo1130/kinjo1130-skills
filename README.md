@@ -1,31 +1,34 @@
 # kinjo1130-skills
 
-Claude Code 用のスキルマーケットプレイス。
+Claude Code と Codex 用のスキルマーケットプレイス。
 
 ## インストール
+
+skill ごとに 1 つのプラグインになっているので、必要なものだけ入れられます。Claude Code と Codex は同じ `plugins/<name>/skills/` を読みます。
 
 ### Claude Code
 
 ```bash
-claude plugin add kinjo1130/kinjo1130-skills
+claude plugin marketplace add kinjo1130/kinjo1130-skills
+claude plugin install coding-standards@kinjo1130-skills
 ```
 
 ### Codex
 
 ```bash
 codex plugin marketplace add kinjo1130/kinjo1130-skills
-codex plugin add kinjo1130-skills@kinjo1130-skills
+codex plugin add coding-standards@kinjo1130-skills
 ```
 
-Claude Code と Codex は同じ `skills/` を読みます。Codex では `$coding-standards` のように skill 名で呼び出せます。
+`coding-standards` の部分を、下の一覧のプラグイン名に変えると他の skill を入れられます。
 
 ## スキル一覧
 
-| スキル | コマンド | 説明 |
+| プラグイン | 呼び出し（Claude Code / Codex） | 説明 |
 |--------|---------|------|
-| [e2e-verify](skills/e2e-verify/) | `/e2e-verify` | Playwright MCPを使った汎用E2E検証。設定ファイル or 自動探索で任意のWebアプリを検証 |
-| [secretary](skills/secretary/) | `/secretary` | Cosense・Notion・GitHubからタスクを横断取得し、秘書的にタスク管理・進捗チェックを行う |
-| [coding-standards](skills/coding-standards/) | `/coding-standards` | TanStack Start + Hono + Prisma の pnpm モノレポ向けコーディング規約。実装・計画・レビューの前に読み込ませる |
+| [e2e-verify](plugins/e2e-verify/skills/e2e-verify/) | `/e2e-verify:e2e-verify` / `$e2e-verify` | Playwright MCPを使った汎用E2E検証。設定ファイル or 自動探索で任意のWebアプリを検証 |
+| [secretary](plugins/secretary/skills/secretary/) | `/secretary:secretary` / `$secretary` | Cosense・Notion・GitHubからタスクを横断取得し、秘書的にタスク管理・進捗チェックを行う |
+| [coding-standards](plugins/coding-standards/skills/coding-standards/) | `/coding-standards:coding-standards` / `$coding-standards` | TanStack Start + Hono + Prisma の pnpm モノレポ向けコーディング規約。実装・計画・レビューの前に読み込ませる |
 
 ## e2e-verify
 

@@ -5,10 +5,34 @@
   },
   "plugins": [
     {
-      "name": "kinjo1130-skills",
+      "name": "coding-standards",
       "source": {
         "source": "local",
-        "path": "./"
+        "path": "./plugins/coding-standards"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    },
+    {
+      "name": "e2e-verify",
+      "source": {
+        "source": "local",
+        "path": "./plugins/e2e-verify"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    },
+    {
+      "name": "secretary",
+      "source": {
+        "source": "local",
+        "path": "./plugins/secretary"
       },
       "policy": {
         "installation": "AVAILABLE",

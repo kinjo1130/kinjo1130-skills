@@ -1,0 +1,27 @@
+{
+  "name": "secretary",
+  "description": "Cosense・Notion・GitHubからタスクを横断取得し、秘書的にタスク管理・進捗チェックを行う",
+  "version": "1.0.0",
+  "author": {
+    "name": "kinjo1130"
+  },
+  "repository": "https://github.com/kinjo1130/kinjo1130-skills",
+  "license": "MIT",
+  "keywords": [
+    "tasks",
+    "cosense",
+    "notion",
+    "github"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "secretary",
+    "shortDescription": "Cosense・Notion・GitHubからタスクを横断取得し、秘書的にタスク管理・進捗チェックを行う",
+    "developerName": "kinjo1130",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Read",
+      "Write"
+    ]
+  }
+}
