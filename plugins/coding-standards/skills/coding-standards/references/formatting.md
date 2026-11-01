@@ -15,35 +15,39 @@ Biome は改行位置とインデントを直すが、**論理の切れ目に空
 段落が 1 行しかない関数（3 行以下）は空行を入れなくてよい。
 
 ```typescript
-// 良い例（AlbumService のメソッド）
-async create(currentUser: CurrentUser, input: CreateAlbumInput): Promise<AlbumResponse> {
-  const duplicated = await this.albumRepository.findByTitle(currentUser.id, input.title);
+// 良い例（domains/album/usecases/create-album.ts）
+export const createAlbum = async (
+  deps: Pick<Deps, 'db' | 'logger'>,
+  currentUser: CurrentUser,
+  input: CreateAlbumInput,
+): Promise<Album> => {
+  const duplicated = await findAlbumByTitle(deps.db, currentUser.id, input.title);
 
   if (duplicated) {
     throw new ConflictError('ALBUM_TITLE_TAKEN', '同じタイトルのアルバムが既にあります');
   }
 
-  const album = await this.albumRepository.create({
+  const album = await insertAlbum(deps.db, {
     ownerId: currentUser.id,
     title: input.title,
     description: input.description ?? null,
   });
 
-  await this.activityLog.record({ type: 'album.created', albumId: album.id });
+  deps.logger.info('album.created', { albumId: album.id });
 
-  return toAlbumResponse(album);
-}
+  return album;
+};
 ```
 
 ```typescript
 // 悪い例 — 段落がなく、1 行に処理を詰めている。名前も省略している
-async create(u: CurrentUser, i: CreateAlbumInput) {
-  const e = await this.repo.findByTitle(u.id, i.title);
+export const createAlbum = async (d: Pick<Deps, 'db' | 'logger'>, u: CurrentUser, i: CreateAlbumInput) => {
+  const e = await findAlbumByTitle(d.db, u.id, i.title);
   if (e) throw new ConflictError('ALBUM_TITLE_TAKEN', 'dup');
-  const a = await this.repo.create({ ownerId: u.id, title: i.title, description: i.description ?? null });
-  await this.log.record({ type: 'album.created', albumId: a.id });
-  return toAlbumResponse(a);
-}
+  const a = await insertAlbum(d.db, { ownerId: u.id, title: i.title, description: i.description ?? null });
+  d.logger.info('album.created', { albumId: a.id });
+  return a;
+};
 ```
 
 Biome で整形しても悪い例は悪い例のままです。空行と名前はフォーマッタでは直りません。
