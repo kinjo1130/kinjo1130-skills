@@ -49,9 +49,10 @@ description: >-
 - [ ] `a` `e` `res` `tmp` `data` のような省略名・意味のない名前がないか
 - [ ] `any`・`as`（`as const` 以外）・`!`・`@ts-ignore` がないか。外部の値を Zod で parse しているか
 - [ ] 型を contracts の Zod スキーマから作っているか（同じ形の型を手書きしていないか）
-- [ ] レイヤーの境界を越えていないか（Prisma の型が Repository の外に出ていない、domain コンポーネントが hooks を呼んでいない など）
+- [ ] レイヤーの境界を越えていないか（api の import が routes → domains → db の一方向になっている、ほかのドメインを `index.ts` と `rules.ts` 以外から import していない、web の domain コンポーネントが hooks を呼んでいない など）
+- [ ] api の関数を、触るもの（I/O なし → `rules.ts`、読む → `queries.ts`、書く → `mutations.ts`、それ以外 → `usecases/`）で置き分けたか。書き込みを usecase 経由にしたか
 - [ ] `process.env` / `c.env` の binding を `entry/` と `config/` 以外で読んでいないか
 - [ ] Hono のルート・ミドルウェアが method chaining で繋がっているか。ハンドラがインラインか
-- [ ] `try-catch` を `adapters/` と `repositories/`（Prisma のエラー翻訳）以外に書いていないか
+- [ ] `try-catch` を `adapters/` と `domains/*/mutations.ts`（Prisma のエラー翻訳）以外に書いていないか
 - [ ] テストを先に書き、デシジョンテーブルの行を網羅しているか
 - [ ] 環境変数を足したなら、スキーマ・`.env.example`・Terraform を同じ変更に入れたか

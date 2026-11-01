@@ -90,9 +90,9 @@ Workers 固有のもの（`c.env`、`ExecutionContext`、R2 / KV / Queues の bi
 
 | 関心事 | ランタイム非依存の書き方 |
 |---|---|
-| 起動 | `createApp(deps)` を `app.ts` に置き、`entry/worker.ts` と `entry/node.ts` がそれぞれ deps を組み立てて呼ぶ |
+| 起動 | `createApp()` を `app.ts` に置き、`entry/worker.ts` と `entry/node.ts` がそれぞれ `deps` を組み立てて `app.fetch` に渡す |
 | 環境変数 | `loadConfig(source)` が Zod で検証する。Workers は `env`、Node は `process.env` を渡す |
-| DB | `createPrismaClient(config.databaseUrl)` を `adapters/db/` に置く |
+| DB | `createPrismaClient(config.databaseUrl)` を `db/client.ts` に置き、entry が呼んで `deps.db` に入れる |
 | ファイル保存 | `interfaces/storage.ts` の `Storage` を介す。R2 binding 版と S3 互換 API 版の実装を `adapters/storage/` に置く |
 | 非同期処理 | `interfaces/job-queue.ts` を介す（Workers は Queues、Cloud Run は Cloud Tasks） |
 | ログ | `console` を直接呼ばず `logger` を注入する（JSON 1 行で出す） |
