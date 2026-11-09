@@ -1,7 +1,8 @@
 # 指示文書 (CLAUDE.md・AGENTS.md など) と既存コードの食い違いを、週に1回精査する。
 # 直した食い違いは pull request に、判断が要る食い違いだけの場合は issue にまとめる。
 #
-# Claude には文書の編集と報告の書き出しだけを任せ、commit・push・pull request・issue は後続の step が行う。
+# audit job は書き込み権限を持たず、Claude が文書を直して報告を書き出す。受け渡すのは patch と報告だけで、
+# publish job が別の runner の新しい checkout で patch を検証してから、pull request か issue を作る。
 #
 # 準備:
 #   - secret CLAUDE_CODE_OAUTH_TOKEN を登録する (API key を使う場合は anthropic_api_key に差し替える)
@@ -23,11 +24,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
-      contents: write
-      pull-requests: write
-      issues: write
-    env:
-      REPORT: instruction-drift-report.md
+      contents: read
+    outputs:
+      has_report: ${{ steps.export.outputs.has_report }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -42,56 +41,99 @@ jobs:
           plugins: instruction-drift@kinjo1130-skills
           prompt: |
             instruction-drift:instruction-drift skill に従い、このリポジトリの指示文書と既存コードの食い違いを精査し、文書を直す。
-            報告先はリポジトリ直下の ${{ env.REPORT }} にする。食い違いが無ければ、このファイルを作らない。
-            commit・push・pull request・issue の操作は後続の step が行うので、行わない。
+            報告先は ${{ runner.temp }}/instruction-drift/report.md にする。食い違いが無ければ、このファイルを作らない。
+            commit・push・pull request・issue の操作は後続の job が行うので、行わない。
           claude_args: |
             --allowedTools "Skill,Read,Glob,Grep,Edit,Write,Bash(git log:*),Bash(git blame:*)"
-            --disallowedTools "Edit(./.git/**)"
+            --add-dir ${{ runner.temp }}/instruction-drift
 
-      - name: Collect result
-        id: result
+      - name: Export patch and report
+        id: export
         run: |
-          if [ ! -f "$REPORT" ]; then
-            echo "kind=none" >> "$GITHUB_OUTPUT"
+          out="$RUNNER_TEMP/instruction-drift"
+          mkdir -p "$out"
+          if [ ! -f "$out/report.md" ]; then
+            echo "has_report=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          mv "$REPORT" "$RUNNER_TEMP/report.md"
+          git add -A
+          git diff --cached --binary > "$out/changes.patch"
+          echo "has_report=true" >> "$GITHUB_OUTPUT"
 
-          changed=$(git status --porcelain --untracked-files=all | cut -c4-)
-          if [ -z "$changed" ]; then
+      - if: steps.export.outputs.has_report == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: instruction-drift
+          path: |
+            ${{ runner.temp }}/instruction-drift/report.md
+            ${{ runner.temp }}/instruction-drift/changes.patch
+          retention-days: 7
+
+  publish:
+    needs: audit
+    if: needs.audit.outputs.has_report == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: instruction-drift
+          path: ${{ runner.temp }}/instruction-drift
+
+      - name: Validate and apply patch
+        id: apply
+        run: |
+          patch="$RUNNER_TEMP/instruction-drift/changes.patch"
+          if [ ! -s "$patch" ]; then
             echo "kind=issue" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          # skill は文書だけを直す。文書以外の変更があれば、何も出さずに失敗させる
-          non_doc=$(printf '%s\n' "$changed" | grep -vE '\.(md|mdc)$' || true)
-          if [ -n "$non_doc" ]; then
-            echo "::error::文書以外のファイルが変更された: $non_doc"
+          # skill は文書だけを直す。文書以外のファイル・.git・symlink・権限の変更を含む patch は適用しない
+          paths=$(git apply --numstat -z "$patch" | tr '\0' '\n' | awk -F'\t' 'NF==3 {print $3; next} NF==1 && $1!="" {print $1}')
+          bad_paths=$(printf '%s\n' "$paths" | grep -vE '\.(md|mdc)$' || true)
+          git_paths=$(printf '%s\n' "$paths" | grep -E '(^|/)\.git(/|$)' || true)
+          bad_modes=$(git apply --summary "$patch" | grep -E 'mode change|120000|rename|copy' || true)
+          if [ -n "$bad_paths$git_paths$bad_modes" ]; then
+            echo "::error::文書以外の変更を含む patch を拒否した"
+            printf '%s\n' "$bad_paths" "$git_paths" "$bad_modes"
             exit 1
           fi
+
+          git apply --check "$patch"
+          git apply "$patch"
           echo "kind=pr" >> "$GITHUB_OUTPUT"
 
       - name: Open or update pull request
-        if: steps.result.outputs.kind == 'pr'
+        if: steps.apply.outputs.kind == 'pr'
         uses: peter-evans/create-pull-request@v8
         with:
           branch: instruction-drift/auto
           commit-message: "docs: 指示文書をコードに合わせる"
           title: 指示文書をコードに合わせる
-          body-path: ${{ runner.temp }}/report.md
+          body-path: ${{ runner.temp }}/instruction-drift/report.md
           labels: instruction-drift
           delete-branch: true
 
       - name: Open or update issue
-        if: steps.result.outputs.kind == 'issue'
+        if: steps.apply.outputs.kind == 'issue'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           gh label create instruction-drift --color c5def5 --force
           # label は triage 以上の権限が無いと付けられず、author も github-actions に絞るので、第三者の issue は拾わない
           number=$(gh issue list --state open --label instruction-drift --author app/github-actions --json number --jq '.[0].number // empty')
           if [ -n "$number" ]; then
-            gh issue edit "$number" --body-file "$RUNNER_TEMP/report.md"
+            gh issue edit "$number" --body-file "$RUNNER_TEMP/instruction-drift/report.md"
           else
-            gh issue create --title "指示文書とコードの食い違い (要判断)" --label instruction-drift --body-file "$RUNNER_TEMP/report.md"
+            gh issue create --title "指示文書とコードの食い違い (要判断)" --label instruction-drift --body-file "$RUNNER_TEMP/instruction-drift/report.md"
           fi
