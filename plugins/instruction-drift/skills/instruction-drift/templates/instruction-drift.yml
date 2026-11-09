@@ -1,0 +1,52 @@
+# 指示文書 (CLAUDE.md・AGENTS.md など) と既存コードの食い違いを、週に1回精査する。
+# 直した食い違いは pull request に、判断が要る食い違いだけの場合は issue にまとめる。
+#
+# 準備:
+#   - リポジトリに Claude の GitHub App を入れる
+#   - secret CLAUDE_CODE_OAUTH_TOKEN を登録する (API key を使う場合は anthropic_api_key に差し替える)
+name: instruction-drift
+
+on:
+  schedule:
+    # 毎週月曜 09:00 JST
+    - cron: "0 0 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: instruction-drift
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          plugin_marketplaces: https://github.com/kinjo1130/kinjo1130-skills.git
+          plugins: instruction-drift@kinjo1130-skills
+          prompt: |
+            REPO: ${{ github.repository }}
+
+            instruction-drift:instruction-drift skill に従い、このリポジトリの指示文書と既存コードの食い違いを精査する。
+            報告先は次のとおりにする。
+
+            - 直した食い違いがある場合
+              - head branch が instruction-drift/auto の open な pull request があれば、その branch に default branch を merge してから直す。無ければ default branch から instruction-drift/auto を作る
+              - 変更を commit して push する。commit message は「docs: 指示文書をコードに合わせる」にする
+              - pull request を作るか、既存の pull request の概要欄を書き換える。title は「指示文書をコードに合わせる」、概要欄は skill の報告形式の全文にする
+            - 判断が要る食い違いだけがある場合
+              - title が「指示文書とコードの食い違い (要判断)」の open な issue があれば本文を書き換え、無ければ作る。本文は skill の報告形式の全文にする
+            - 食い違いが無い場合は、何も作らない
+          claude_args: |
+            --allowedTools "Skill,Read,Glob,Grep,Edit,Write,Bash(git:*),Bash(gh pr:*),Bash(gh issue:*)"

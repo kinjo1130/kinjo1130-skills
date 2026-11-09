@@ -29,6 +29,7 @@ codex plugin add coding-standards@kinjo1130-skills
 | [e2e-verify](plugins/e2e-verify/skills/e2e-verify/) | `/e2e-verify:e2e-verify` / `$e2e-verify` | Playwright MCPを使った汎用E2E検証。設定ファイル or 自動探索で任意のWebアプリを検証 |
 | [secretary](plugins/secretary/skills/secretary/) | `/secretary:secretary` / `$secretary` | Cosense・Notion・GitHubからタスクを横断取得し、秘書的にタスク管理・進捗チェックを行う |
 | [coding-standards](plugins/coding-standards/skills/coding-standards/) | `/coding-standards:coding-standards` / `$coding-standards` | TanStack Start + Hono + Prisma の pnpm モノレポ向けコーディング規約。実装・計画・レビューの前に読み込ませる |
+| [instruction-drift](plugins/instruction-drift/skills/instruction-drift/) | `/instruction-drift:instruction-drift` / `$instruction-drift` | CLAUDE.md・AGENTS.md などの指示文書と既存コードの食い違いを洗い出し、指示文書をコードに合わせて直す。CI での週次精査 template つき |
 
 ## e2e-verify
 
@@ -107,6 +108,27 @@ TanStack Start（SSR）+ Hono + Prisma + Neon の pnpm モノレポで、誰が�
 
 - Claude Code: `templates/CLAUDE.md` を `.claude/CLAUDE.md` にコピーする
 - Codex: `templates/AGENTS.md` をリポジトリ直下の `AGENTS.md` にコピーする
+
+## instruction-drift
+
+Claude Code や Codex は、CLAUDE.md・AGENTS.md の記述が今のコードと食い違うと、食い違いに気付いていても古い記述に従いやすいと報告されています。指示文書は書いたきりになりやすいので、この skill で定期的に指示文書をコードに合わせます。
+
+- 指示文書の記述を、コードで確かめられる主張に分けて照らし合わせる
+- 文書が古いだけの食い違いは、文書をコードに合わせて直す。コードは書き換えない
+- どちらが正か決められない食い違いは、判断材料を添えて報告する
+- 入口の指示文書に「食い違ったらコードに従い、見つけた食い違いを報告する」という一文が無ければ足す
+
+```
+/instruction-drift:instruction-drift                 # リポジトリ全体を精査して直す
+/instruction-drift:instruction-drift .claude/rules   # 範囲を絞る
+```
+
+### CI で定期実行する
+
+[templates/instruction-drift.yml](plugins/instruction-drift/skills/instruction-drift/templates/instruction-drift.yml) を対象リポジトリの `.github/workflows/` に置くと、週に 1 回 [claude-code-action](https://github.com/anthropics/claude-code-action) がこの skill を実行します。直した食い違いは pull request に、判断が要る食い違いだけの場合は issue にまとまります。
+
+- リポジトリに Claude の GitHub App を入れ、secret `CLAUDE_CODE_OAUTH_TOKEN` を登録する
+- skill に「CI に組み込んで」と頼むと、template を置くところまで行います
 
 ## ライセンス
 
