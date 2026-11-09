@@ -33,6 +33,11 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      # Claude の実行後に git を動かす前に、.git の設定と hook が変わっていない事を確かめるため
+      - name: Snapshot git config
+        id: snapshot
+        run: echo "digest=$(find .git/config .git/hooks .git/info -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -45,19 +50,29 @@ jobs:
             commit・push・pull request・issue の操作は後続の job が行うので、行わない。
           claude_args: |
             --allowedTools "Skill,Read,Glob,Grep,Edit,Write,Bash(git log:*),Bash(git blame:*)"
+            --disallowedTools "Edit(./.git/**),Write(./.git/**)"
             --add-dir ${{ runner.temp }}/instruction-drift
 
       - name: Export patch and report
         id: export
+        env:
+          GIT_DIGEST: ${{ steps.snapshot.outputs.digest }}
+          GIT_CONFIG_GLOBAL: /dev/null
+          GIT_CONFIG_NOSYSTEM: "1"
         run: |
+          digest=$(find .git/config .git/hooks .git/info -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -d' ' -f1)
+          if [ "$digest" != "$GIT_DIGEST" ]; then
+            echo "::error::.git の設定か hook が変更された"
+            exit 1
+          fi
           out="$RUNNER_TEMP/instruction-drift"
           mkdir -p "$out"
           if [ ! -f "$out/report.md" ]; then
             echo "has_report=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          git add -A
-          git diff --cached --binary > "$out/changes.patch"
+          git -c core.hooksPath=/dev/null -c core.fsmonitor=false add -A
+          git diff --cached --binary --no-ext-diff --no-textconv > "$out/changes.patch"
           echo "has_report=true" >> "$GITHUB_OUTPUT"
 
       - if: steps.export.outputs.has_report == 'true'
@@ -97,19 +112,29 @@ jobs:
             exit 0
           fi
 
-          # skill は文書だけを直す。文書以外のファイル・.git・symlink・権限の変更を含む patch は適用しない
-          paths=$(git apply --numstat -z "$patch" | tr '\0' '\n' | awk -F'\t' 'NF==3 {print $3; next} NF==1 && $1!="" {print $1}')
-          bad_paths=$(printf '%s\n' "$paths" | grep -vE '\.(md|mdc)$' || true)
-          git_paths=$(printf '%s\n' "$paths" | grep -E '(^|/)\.git(/|$)' || true)
-          bad_modes=$(git apply --summary "$patch" | grep -E 'mode change|120000|rename|copy' || true)
-          if [ -n "$bad_paths$git_paths$bad_modes" ]; then
-            echo "::error::文書以外の変更を含む patch を拒否した"
-            printf '%s\n' "$bad_paths" "$git_paths" "$bad_modes"
-            exit 1
-          fi
-
-          git apply --check "$patch"
           git apply "$patch"
+          git add -A
+
+          # skill は文書だけを直す。git が列挙した変更を1件ずつ確かめ、想定外の形が1つでもあれば何も出さずに失敗させる
+          while IFS= read -r -d '' meta && IFS= read -r -d '' path; do
+            read -r old_mode new_mode _ _ status <<< "${meta#:}"
+            reason=""
+            case "$status" in A|M|D) ;; *) reason="status $status" ;; esac
+            case "$old_mode $new_mode" in "000000 100644"|"100644 100644"|"100644 000000") ;; *) reason="mode $old_mode -> $new_mode" ;; esac
+            case "$path" in *[[:cntrl:]]*) reason="制御文字を含むパス" ;; esac
+            case "$path" in .git/*|*/.git/*) reason=".git 配下" ;; esac
+            case "$path" in *.md|*.mdc) ;; *) reason="${reason:-文書以外のファイル}" ;; esac
+            if [ -n "$reason" ]; then
+              echo "::error::文書以外の変更を含む patch を拒否した ($reason)"
+              printf '%q\n' "$path"
+              exit 1
+            fi
+          done < <(git diff --cached --raw -z --no-renames)
+
+          if git diff --cached --quiet; then
+            echo "kind=issue" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           echo "kind=pr" >> "$GITHUB_OUTPUT"
 
       - name: Open or update pull request
