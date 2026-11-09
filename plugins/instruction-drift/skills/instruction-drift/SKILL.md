@@ -80,5 +80,6 @@ When a repository's documentation and its existing code disagree, follow the con
 
 置いた後、ユーザーに次の準備を伝える。
 
-- リポジトリに Claude の GitHub App を入れ、認証情報を secret に登録する。template は `CLAUDE_CODE_OAUTH_TOKEN` を読む。API key を使う場合は `anthropic_api_key` に差し替える
+- 認証情報を secret に登録する。template は `CLAUDE_CODE_OAUTH_TOKEN` を読む。API key を使う場合は `anthropic_api_key` に差し替える
+- リポジトリの設定で、GitHub Actions が pull request を作る事を許可する
 - 実行の曜日と時刻は `cron` で変えられる。cron は UTC で書く

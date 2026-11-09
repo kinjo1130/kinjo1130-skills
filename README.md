@@ -125,9 +125,10 @@ Claude Code や Codex は、CLAUDE.md・AGENTS.md の記述が今のコードと
 
 ### CI で定期実行する
 
-[templates/instruction-drift.yml](plugins/instruction-drift/skills/instruction-drift/templates/instruction-drift.yml) を対象リポジトリの `.github/workflows/` に置くと、週に 1 回 [claude-code-action](https://github.com/anthropics/claude-code-action) がこの skill を実行します。直した食い違いは pull request に、判断が要る食い違いだけの場合は issue にまとまります。
+[templates/instruction-drift.yml](plugins/instruction-drift/skills/instruction-drift/templates/instruction-drift.yml) を対象リポジトリの `.github/workflows/` に置くと、週に 1 回 [claude-code-action](https://github.com/anthropics/claude-code-action) がこの skill を実行します。直した食い違いは pull request に、判断が要る食い違いだけの場合は issue にまとまります。Claude に任せるのは文書の編集と報告の書き出しだけで、commit・pull request・issue の操作は後続の step が行います。文書以外のファイルが変わった場合は、何も出さずに失敗します。
 
-- リポジトリに Claude の GitHub App を入れ、secret `CLAUDE_CODE_OAUTH_TOKEN` を登録する
+- secret `CLAUDE_CODE_OAUTH_TOKEN` を登録する
+- Settings > Actions > General で「Allow GitHub Actions to create and approve pull requests」を有効にする
 - skill に「CI に組み込んで」と頼むと、template を置くところまで行います
 
 ## ライセンス

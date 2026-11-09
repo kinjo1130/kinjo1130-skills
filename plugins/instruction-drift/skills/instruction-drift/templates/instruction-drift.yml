@@ -1,9 +1,11 @@
 # 指示文書 (CLAUDE.md・AGENTS.md など) と既存コードの食い違いを、週に1回精査する。
 # 直した食い違いは pull request に、判断が要る食い違いだけの場合は issue にまとめる。
 #
+# Claude には文書の編集と報告の書き出しだけを任せ、commit・push・pull request・issue は後続の step が行う。
+#
 # 準備:
-#   - リポジトリに Claude の GitHub App を入れる
 #   - secret CLAUDE_CODE_OAUTH_TOKEN を登録する (API key を使う場合は anthropic_api_key に差し替える)
+#   - Settings > Actions > General で「Allow GitHub Actions to create and approve pull requests」を有効にする
 name: instruction-drift
 
 on:
@@ -24,29 +26,72 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
-      id-token: write
+    env:
+      REPORT: instruction-drift-report.md
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           plugin_marketplaces: https://github.com/kinjo1130/kinjo1130-skills.git
           plugins: instruction-drift@kinjo1130-skills
           prompt: |
-            REPO: ${{ github.repository }}
-
-            instruction-drift:instruction-drift skill に従い、このリポジトリの指示文書と既存コードの食い違いを精査する。
-            報告先は次のとおりにする。
-
-            - 直した食い違いがある場合
-              - head branch が instruction-drift/auto の open な pull request があれば、その branch に default branch を merge してから直す。無ければ default branch から instruction-drift/auto を作る
-              - 変更を commit して push する。commit message は「docs: 指示文書をコードに合わせる」にする
-              - pull request を作るか、既存の pull request の概要欄を書き換える。title は「指示文書をコードに合わせる」、概要欄は skill の報告形式の全文にする
-            - 判断が要る食い違いだけがある場合
-              - title が「指示文書とコードの食い違い (要判断)」の open な issue があれば本文を書き換え、無ければ作る。本文は skill の報告形式の全文にする
-            - 食い違いが無い場合は、何も作らない
+            instruction-drift:instruction-drift skill に従い、このリポジトリの指示文書と既存コードの食い違いを精査し、文書を直す。
+            報告先はリポジトリ直下の ${{ env.REPORT }} にする。食い違いが無ければ、このファイルを作らない。
+            commit・push・pull request・issue の操作は後続の step が行うので、行わない。
           claude_args: |
-            --allowedTools "Skill,Read,Glob,Grep,Edit,Write,Bash(git:*),Bash(gh pr:*),Bash(gh issue:*)"
+            --allowedTools "Skill,Read,Glob,Grep,Edit,Write,Bash(git log:*),Bash(git blame:*)"
+            --disallowedTools "Edit(./.git/**)"
+
+      - name: Collect result
+        id: result
+        run: |
+          if [ ! -f "$REPORT" ]; then
+            echo "kind=none" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          mv "$REPORT" "$RUNNER_TEMP/report.md"
+
+          changed=$(git status --porcelain --untracked-files=all | cut -c4-)
+          if [ -z "$changed" ]; then
+            echo "kind=issue" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # skill は文書だけを直す。文書以外の変更があれば、何も出さずに失敗させる
+          non_doc=$(printf '%s\n' "$changed" | grep -vE '\.(md|mdc)$' || true)
+          if [ -n "$non_doc" ]; then
+            echo "::error::文書以外のファイルが変更された: $non_doc"
+            exit 1
+          fi
+          echo "kind=pr" >> "$GITHUB_OUTPUT"
+
+      - name: Open or update pull request
+        if: steps.result.outputs.kind == 'pr'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          branch: instruction-drift/auto
+          commit-message: "docs: 指示文書をコードに合わせる"
+          title: 指示文書をコードに合わせる
+          body-path: ${{ runner.temp }}/report.md
+          labels: instruction-drift
+          delete-branch: true
+
+      - name: Open or update issue
+        if: steps.result.outputs.kind == 'issue'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create instruction-drift --color c5def5 --force
+          # label は triage 以上の権限が無いと付けられず、author も github-actions に絞るので、第三者の issue は拾わない
+          number=$(gh issue list --state open --label instruction-drift --author app/github-actions --json number --jq '.[0].number // empty')
+          if [ -n "$number" ]; then
+            gh issue edit "$number" --body-file "$RUNNER_TEMP/report.md"
+          else
+            gh issue create --title "指示文書とコードの食い違い (要判断)" --label instruction-drift --body-file "$RUNNER_TEMP/report.md"
+          fi
