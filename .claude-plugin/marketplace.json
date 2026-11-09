@@ -21,6 +21,11 @@
       "name": "secretary",
       "source": "./plugins/secretary",
       "description": "Cosense・Notion・GitHubからタスクを横断取得し、秘書的にタスク管理・進捗チェックを行う"
+    },
+    {
+      "name": "instruction-drift",
+      "source": "./plugins/instruction-drift",
+      "description": "CLAUDE.md・AGENTS.md などの指示文書と既存コードの食い違いを洗い出し、指示文書をコードに合わせて直す。CI での週次精査 template つき"
     }
   ]
 }
